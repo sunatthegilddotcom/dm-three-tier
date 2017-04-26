@@ -1,0 +1,14 @@
+imports:
+- path: vm_app_blue_template.jinja
+- path: vm_app_green_template.jinja
+- path: vm_web_blue_template.jinja
+- path: vm_web_green_template.jinja
+- path: subnetwork_template.jinja
+- path: public_fw.jinja
+- path: app-web_fw.jinja
+- path: db_fw.jinja
+- path: master_template.jinja
+
+resources:
+- name: stack-setup
+  type: master_template.jinja
