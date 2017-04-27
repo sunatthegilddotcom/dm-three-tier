@@ -1,0 +1,18 @@
+{% set LB_NAME = env['deployment'] + '-' +  env['name'] + '-internal-lb' %}
+
+resources:
+- name: {{ LB_NAME }}
+  type: instance.jinja
+  properties:
+    machine-type: {{ properties['machine-type'] }}
+    metadata:
+      algorithm: {{ properties['algorithm'] }}
+      app-port: {{ properties['app-port'] }}
+      port: {{ properties['port'] }}
+      groups: {{ properties['groups']|join(' ') }}
+    startup-script: haproxy-startup-script.sh
+    zone: {{ properties['zone'] }}
+
+outputs:
+- name: address
+  value: $(ref.{{ LB_NAME }}.address)
