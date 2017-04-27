@@ -28,15 +28,22 @@ resources:
     subnet_name: db-subnet
     region: us-east1
 
-## Load Balancer Components
+## LOAD BALANCERS
+
+## Static IP for Front Load Balancer
+- type: compute.v1.address
+  name: {{ env["deployment"] }}-lb-address
+  properties:
+    region: us-east1
+
 # Create and define a Backend service
 #
-- name: generic-backend-service
-  type: compute.v1.backendService
-  properties:
-      protocol: HTTP
-      healthChecks:
-        - $(ref.http-basic-check.selfLink)
+# - name: generic-backend-service
+#   type: compute.v1.backendService
+#   properties:
+#       protocol: HTTP
+#       healthChecks:
+#         - $(ref.http-basic-check.selfLink)
 
 
 # Create a basic HTTP health check
@@ -44,6 +51,14 @@ resources:
 - name: http-basic-check
   type: compute.v1.httpHealthCheck
 
+# targetPool
+#
+# - name: app-tier-target-pool
+#   type: compute.v1.targetPool
+#   properties:
+#     region: us-east1
+#     healthChecks:
+#       - $(ref.http-basic-check.selfLink)
 
 # - name: public-subnet-firewall
 #   type: public_fw.jinja

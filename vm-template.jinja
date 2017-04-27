@@ -16,3 +16,11 @@ resources:
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
+
+
+    metadata:
+      items:
+        - key: startup-script
+          value: |
+            #!/bin/bash
+            sudo python -m SimpleHTTPServer 80
