@@ -1,0 +1,12 @@
+resources:
+- name: {{ properties["name"] }}
+  type: compute.v1.instanceGroupManager
+  properties:
+    zone: {{ properties["zone"] }}
+    instanceTemplate: projects/{{ env["REGION"] }}/global/instanceTemplates/{{ properties["instanceTemplate"] }}
+    baseInstanceName: {{ properties["name"] }}-instance
+    targetSize: 0
+    targetPools: 
+      - $(ref.{{ properties["group"] }}-tp.selfLink)
+    autoHealingPolicies:
+      - initialDelaySec: 300
