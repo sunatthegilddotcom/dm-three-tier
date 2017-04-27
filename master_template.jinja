@@ -28,6 +28,22 @@ resources:
     subnet_name: db-subnet
     region: us-east1
 
+## Load Balancer Components
+# Create and define a Backend service
+#
+- name: generic-backend-service
+  type: compute.v1.backendService
+  properties:
+      protocol: HTTP
+      healthChecks:
+        - $(ref.http-basic-check.selfLink)
+
+
+# Create a basic HTTP health check
+#
+- name: http-basic-check
+  type: compute.v1.httpHealthCheck
+
 
 # - name: public-subnet-firewall
 #   type: public_fw.jinja
