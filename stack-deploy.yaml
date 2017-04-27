@@ -4,6 +4,7 @@ imports:
 - path: public_fw.jinja
 - path: app-web_fw.jinja
 - path: db_fw.jinja
+- path: internal_lb.jinja
 - path: master_template.jinja
 
 resources:
