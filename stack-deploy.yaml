@@ -1,0 +1,45 @@
+imports:
+- path: subnetwork.jinja
+- path: internal-lb.jinja
+
+#resources:
+#- name: stack-setup
+#  type: master-template.jinja
+
+resources:
+
+## NETWORK
+- name: test-network
+  type: compute.v1.network
+  properties:
+    autoCreateSubnetworks: false
+    region: us-east1
+
+- name: public-subnet
+  type: subnetwork.jinja
+  properties:
+    cidr: 10.155.192.0/19
+    subnet_name: public-subnet
+    region: us-east1
+
+- name: app-web-subnet
+  type: subnetwork.jinja
+  properties:
+    cidr: 10.155.0.0/18
+    subnet_name: app-web-subnet
+    region: us-east1
+
+- name: db-subnet
+  type: subnetwork.jinja
+  properties:
+    cidr: 10.155.128.0/19
+    subnet_name: db-subnet
+    region: us-east1
+
+## LOAD BALANCERS
+
+## Static IP for Front Load Balancer
+- type: compute.v1.address
+  name: test-lb-address
+  properties:
+    region: us-east1
