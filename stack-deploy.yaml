@@ -1,6 +1,8 @@
 imports:
 - path: subnetwork.jinja
-- path: internal-lb.jinja
+- path: instance-group.jinja
+- path: instance-template.jinja
+- path: startup-script.sh
 
 #resources:
 #- name: stack-setup
@@ -8,7 +10,12 @@ imports:
 
 resources:
 
-## NETWORK
+
+
+######################################################
+## NETWORK and SUBNETS
+######################################################
+
 - name: test-network
   type: compute.v1.network
   properties:
@@ -36,10 +43,90 @@ resources:
     subnet_name: db-subnet
     region: us-east1
 
+
+
+######################################################
+## FIREWALL RULES
+######################################################
+
+# Allow HTTP and HTTPS from any source
+- name: fw-allow-http-https
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: ["0.0.0.0/0"]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["80","443"]
+
+# Allow ICMP and SSH from any source
+- name: fw-allow-icmp-ssh
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: ["0.0.0.0/0"]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["22"]
+    - IPProtocol: ICMP
+
+# Allow any traffic from the app-web tier
+- name: fw-allow-appweb-tier
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: [$(ref.app-web-subnet.ipCidrRange)]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["0-65535"]
+    - IPProtocol: UDP
+      ports: ["0-65535"]
+    - IPProtocol: ICMP
+
+# Allow any traffic from the DB tier
+- name: fw-allow-db-tier
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: [$(ref.db-subnet.ipCidrRange)]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["0-65535"]
+    - IPProtocol: UDP
+      ports: ["0-65535"]
+    - IPProtocol: ICMP
+
+
+
+######################################################
 ## LOAD BALANCERS
+######################################################
 
 ## Static IP for Front Load Balancer
 - type: compute.v1.address
   name: test-lb-address
   properties:
     region: us-east1
+
+
+
+######################################################
+## INSTANCES
+######################################################
+
+## Create Instance Template
+- type: instance-template.jinja
+  name: web-instance-template
+  properties:
+    name: web-instance-template
+    subnetwork: app-web-subnet
+
+## Create Instance Group
+- type: instance-group.jinja
+  name: web
+  properties:
+    zone: us-east1-b
+    instance-template: web-instance-template
+    targetSize: 2
+    maxReplicas: 4
+
