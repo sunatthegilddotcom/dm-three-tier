@@ -1,12 +1,22 @@
+{% set IGM = env["name"] %}
+
 resources:
-- name: {{ properties["name"] }}
+
+- name: {{ IGM }}
   type: compute.v1.instanceGroupManager
   properties:
+    baseInstanceName: {{ env["name"] }}-instance
+    instanceTemplate: $(ref.{{ properties["instance-template"] }}.selfLink)
+    targetSize: {{ properties["targetSize"] }}
     zone: {{ properties["zone"] }}
-    instanceTemplate: projects/{{ env["REGION"] }}/global/instanceTemplates/{{ properties["instanceTemplate"] }}
-    baseInstanceName: {{ properties["name"] }}-instance
-    targetSize: 0
-    targetPools: 
-      - $(ref.{{ properties["group"] }}-tp.selfLink)
-    autoHealingPolicies:
-      - initialDelaySec: 300
+
+- name: {{ IGM }}-as
+  type: compute.v1.autoscaler
+  properties:
+    zone: {{ properties["zone"] }}
+    target: $(ref.{{ IGM }}.selfLink)
+    autoscalingPolicy:
+      maxNumReplicas: {{ properties["maxReplicas"] }}
+      cpuUtilization:
+        utilizationTarget: 0.8
+      coolDownPeriodSec: 90
