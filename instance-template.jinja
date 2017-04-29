@@ -1,0 +1,25 @@
+resources:
+- name: {{ properties["name"] }}
+  type: compute.v1.instanceTemplate
+  properties:
+    zone: {{ properties["zone"] }}
+    properties:
+      machineType: f1-micro
+      networkInterfaces:
+      - network: $(ref.{{ env["deployment"] }}-network.selfLink)
+        subnetwork: $(ref.{{ properties["subnetwork"] }}.selfLink)
+        accessConfigs:
+        - name: External-IP
+          type: ONE_TO_ONE_NAT
+      disks:
+      - deviceName: boot
+        type: PERSISTENT
+        boot: true
+        autoDelete: true
+        initializeParams:
+          sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/family/debian-8
+      metadata:
+        items:
+          - key: startup-script
+            value: |
+              {{ imports["startup-script.sh"] | indent(14) }}
