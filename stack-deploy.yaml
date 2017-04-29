@@ -1,14 +1,132 @@
 imports:
-- path: vm_app_blue_template.jinja
-- path: vm_app_green_template.jinja
-- path: vm_web_blue_template.jinja
-- path: vm_web_green_template.jinja
-- path: subnetwork_template.jinja
-- path: public_fw.jinja
-- path: app-web_fw.jinja
-- path: db_fw.jinja
-- path: master_template.jinja
+- path: subnetwork.jinja
+- path: instance-group.jinja
+- path: instance-template.jinja
+- path: startup-script.sh
+
+#resources:
+#- name: stack-setup
+#  type: master-template.jinja
 
 resources:
-- name: stack-setup
-  type: master_template.jinja
+
+
+
+######################################################
+## NETWORK and SUBNETS
+######################################################
+
+- name: test-network
+  type: compute.v1.network
+  properties:
+    autoCreateSubnetworks: false
+    region: us-east1
+
+- name: public-subnet
+  type: subnetwork.jinja
+  properties:
+    cidr: 10.155.192.0/19
+    subnet_name: public-subnet
+    region: us-east1
+
+- name: app-web-subnet
+  type: subnetwork.jinja
+  properties:
+    cidr: 10.155.0.0/18
+    subnet_name: app-web-subnet
+    region: us-east1
+
+- name: db-subnet
+  type: subnetwork.jinja
+  properties:
+    cidr: 10.155.128.0/19
+    subnet_name: db-subnet
+    region: us-east1
+
+
+
+######################################################
+## FIREWALL RULES
+######################################################
+
+# Allow HTTP and HTTPS from any source
+- name: fw-allow-http-https
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: ["0.0.0.0/0"]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["80","443"]
+
+# Allow ICMP and SSH from any source
+- name: fw-allow-icmp-ssh
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: ["0.0.0.0/0"]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["22"]
+    - IPProtocol: ICMP
+
+# Allow any traffic from the app-web tier
+- name: fw-allow-appweb-tier
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: [$(ref.app-web-subnet.ipCidrRange)]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["0-65535"]
+    - IPProtocol: UDP
+      ports: ["0-65535"]
+    - IPProtocol: ICMP
+
+# Allow any traffic from the DB tier
+- name: fw-allow-db-tier
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: [$(ref.db-subnet.ipCidrRange)]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["0-65535"]
+    - IPProtocol: UDP
+      ports: ["0-65535"]
+    - IPProtocol: ICMP
+
+
+
+######################################################
+## LOAD BALANCERS
+######################################################
+
+## Static IP for Front Load Balancer
+- type: compute.v1.address
+  name: test-lb-address
+  properties:
+    region: us-east1
+
+
+
+######################################################
+## INSTANCES
+######################################################
+
+## Create Instance Template
+- type: instance-template.jinja
+  name: web-instance-template
+  properties:
+    name: web-instance-template
+    subnetwork: app-web-subnet
+
+## Create Instance Group
+- type: instance-group.jinja
+  name: web
+  properties:
+    zone: us-east1-b
+    instance-template: web-instance-template
+    targetSize: 2
+    maxReplicas: 4
+
