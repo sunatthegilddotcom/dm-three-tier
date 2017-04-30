@@ -2,6 +2,7 @@ imports:
 - path: subnetwork.jinja
 - path: instance-group.jinja
 - path: instance-template.jinja
+- path: l3-load-balancer.jinja
 - path: startup-script.sh
 
 #resources:
