@@ -120,6 +120,7 @@ resources:
   properties:
     name: web-instance-template
     subnetwork: app-web-subnet
+    tag: web-http
 
 ## Create Instance Group
 - type: instance-group.jinja
