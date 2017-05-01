@@ -1,22 +1,22 @@
-{% set IGM = env["name"] %}
+{% set IGM_NAME = env['name'] + '-igm' %}
 
 resources:
-
-- name: {{ IGM }}
+- name: {{ IGM_NAME }}
   type: compute.v1.instanceGroupManager
   properties:
     baseInstanceName: {{ env["name"] }}-instance
     instanceTemplate: $(ref.{{ properties["instance-template"] }}.selfLink)
-    targetSize: {{ properties["targetSize"] }}
+    targetSize: {{ properties['minSize'] }}
     zone: {{ properties["zone"] }}
 
-- name: {{ IGM }}-as
+- name: {{ IGM_NAME }}-as
   type: compute.v1.autoscaler
   properties:
     zone: {{ properties["zone"] }}
-    target: $(ref.{{ IGM }}.selfLink)
+    target: $(ref.{{ IGM_NAME }}.selfLink)
     autoscalingPolicy:
-      maxNumReplicas: {{ properties["maxReplicas"] }}
+      minNumReplicas: {{ properties['minSize'] }}
+      maxNumReplicas: {{ properties['maxSize'] }}
       cpuUtilization:
         utilizationTarget: 0.8
       coolDownPeriodSec: 90
