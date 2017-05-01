@@ -1,5 +1,7 @@
+{% set IT_NAME = properties["name"] %}
+
 resources:
-- name: {{ properties["name"] }}
+- name: {{ IT_NAME }}
   type: compute.v1.instanceTemplate
   properties:
     zone: {{ properties["zone"] }}
