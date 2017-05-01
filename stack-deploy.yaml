@@ -2,7 +2,6 @@ imports:
 - path: subnetwork.jinja
 - path: instance-group.jinja
 - path: instance-template.jinja
-- path: l3-load-balancer.jinja
 - path: startup-script.sh
 
 #resources:
@@ -104,11 +103,10 @@ resources:
 ######################################################
 
 ## Static IP for Front Load Balancer
-- type: compute.v1.address
-  name: test-lb-address
+- name: test-lb-address
+  type: compute.v1.address
   properties:
     region: us-east1
-
 
 
 ######################################################
@@ -116,19 +114,18 @@ resources:
 ######################################################
 
 ## Create Instance Template
-- type: instance-template.jinja
-  name: web-instance-template
+- name: web-instance-template
+  type: instance-template.jinja
   properties:
     name: web-instance-template
     subnetwork: app-web-subnet
     tag: web-http
 
 ## Create Instance Group
-- type: instance-group.jinja
-  name: web
+- name: web
+  type: instance-group.jinja
   properties:
     zone: us-east1-b
     instance-template: web-instance-template
-    targetSize: 2
-    maxReplicas: 4
-
+    minSize: 2
+    maxSize: 2
