@@ -1,4 +1,5 @@
-{% set IT_NAME = properties["name"] %}
+{% set IGM_NAME = env['name'] + '-igm' %}
+{% set IT_NAME = env['name'] + '-it' %}
 
 resources:
 - name: {{ IT_NAME }}
@@ -30,3 +31,23 @@ resources:
           - key: startup-script
             value: |
               {{ imports["startup-script.sh"] | indent(14) }}
+
+- name: {{ IGM_NAME }}
+  type: compute.v1.instanceGroupManager
+  properties:
+    baseInstanceName: {{ env["name"] }}-instance
+    instanceTemplate: $(ref.{{ IT_NAME }}.selfLink)
+    targetSize: {{ properties['minSize'] }}
+    zone: {{ properties["zone"] }}
+
+- name: {{ IGM_NAME }}-as
+  type: compute.v1.autoscaler
+  properties:
+    zone: {{ properties["zone"] }}
+    target: $(ref.{{ IGM_NAME }}.selfLink)
+    autoscalingPolicy:
+      minNumReplicas: {{ properties['minSize'] }}
+      maxNumReplicas: {{ properties['maxSize'] }}
+      cpuUtilization:
+        utilizationTarget: 0.8
+      coolDownPeriodSec: 90

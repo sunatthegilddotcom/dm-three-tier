@@ -1,7 +1,6 @@
 imports:
 - path: subnetwork.jinja
-- path: instance-group.jinja
-- path: instance-template.jinja
+- path: service-tier.jinja
 - path: startup-script.sh
 
 #resources:
@@ -113,19 +112,13 @@ resources:
 ## INSTANCES
 ######################################################
 
-## Create Instance Template
-- name: web-instance-template
-  type: instance-template.jinja
-  properties:
-    name: web-instance-template
-    subnetwork: app-web-subnet
-    tag: web-http
-
-## Create Instance Group
+## Create Web service tier
 - name: web
-  type: instance-group.jinja
+  type: service-tier.jinja
   properties:
+    subnetwork: app-web-subnet
     zone: us-east1-b
     instance-template: web-instance-template
+    tag: web-http
     minSize: 2
     maxSize: 2
