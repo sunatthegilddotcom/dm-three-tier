@@ -1,11 +1,10 @@
-{% set IGM_NAME = env['name'] + '-igm' %}
 {% set IT_NAME = env['name'] + '-it' %}
+{% set REGION = properties['zones'][0][:-2] %}
 
 resources:
 - name: {{ IT_NAME }}
   type: compute.v1.instanceTemplate
   properties:
-    zone: {{ properties["zone"] }}
     properties:
       machineType: f1-micro
       networkInterfaces:
@@ -32,18 +31,20 @@ resources:
             value: |
               {{ imports["startup-script.sh"] | indent(14) }}
 
+{% for zone in properties['zones'] %}
+{% set IGM_NAME = env['name'] + '-' + zone + '-igm' %}
 - name: {{ IGM_NAME }}
   type: compute.v1.instanceGroupManager
   properties:
     baseInstanceName: {{ env["name"] }}-instance
     instanceTemplate: $(ref.{{ IT_NAME }}.selfLink)
     targetSize: {{ properties['minSize'] }}
-    zone: {{ properties["zone"] }}
+    zone: {{ zone }}
 
 - name: {{ IGM_NAME }}-as
   type: compute.v1.autoscaler
   properties:
-    zone: {{ properties["zone"] }}
+    zone: {{ zone }}
     target: $(ref.{{ IGM_NAME }}.selfLink)
     autoscalingPolicy:
       minNumReplicas: {{ properties['minSize'] }}
@@ -51,3 +52,4 @@ resources:
       cpuUtilization:
         utilizationTarget: 0.8
       coolDownPeriodSec: 90
+{% endfor %}

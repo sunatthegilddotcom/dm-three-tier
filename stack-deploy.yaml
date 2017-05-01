@@ -1,6 +1,7 @@
 imports:
 - path: subnetwork.jinja
 - path: service-tier.jinja
+- path: ha-service.jinja
 - path: startup-script.sh
 
 #resources:
@@ -113,12 +114,24 @@ resources:
 ######################################################
 
 ## Create Web service tier
+# - name: web
+#   type: service-tier.jinja
+#   properties:
+#     subnetwork: app-web-subnet
+#     zone: us-east1-b
+#     instance-template: web-instance-template
+#     tag: web-http
+#     minSize: 1
+#     maxSize: 2
+
+## Create HA web service tier
 - name: web
   type: service-tier.jinja
   properties:
     subnetwork: app-web-subnet
-    zone: us-east1-b
-    instance-template: web-instance-template
+    zones:
+    - us-east1-b
+    - us-east1-d
     tag: web-http
-    minSize: 2
+    minSize: 1
     maxSize: 2
