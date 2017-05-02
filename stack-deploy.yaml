@@ -1,16 +1,11 @@
 imports:
 - path: subnetwork.jinja
 - path: service-tier.jinja
-- path: ha-service.jinja
+- path: l3-load-balancer.jinja
 - path: startup-script.sh
 
-#resources:
-#- name: stack-setup
-#  type: master-template.jinja
 
 resources:
-
-
 
 ######################################################
 ## NETWORK and SUBNETS
@@ -55,6 +50,9 @@ resources:
   properties:
     network: $(ref.test-network.selfLink)
     sourceRanges: ["0.0.0.0/0"]
+    targetTags:
+    - http-server
+    - https-server
     allowed:
     - IPProtocol: TCP
       ports: ["80","443"]
@@ -102,27 +100,14 @@ resources:
 ## LOAD BALANCERS
 ######################################################
 
-## Static IP for Front Load Balancer
+## Reserve Global IP for Front Load Balancer
 - name: test-lb-address
-  type: compute.v1.address
-  properties:
-    region: us-east1
+  type: compute.v1.globalAddresses
 
 
 ######################################################
 ## INSTANCES
 ######################################################
-
-## Create Web service tier
-# - name: web
-#   type: service-tier.jinja
-#   properties:
-#     subnetwork: app-web-subnet
-#     zone: us-east1-b
-#     instance-template: web-instance-template
-#     tag: web-http
-#     minSize: 1
-#     maxSize: 2
 
 ## Create HA web service tier
 - name: web
@@ -132,6 +117,15 @@ resources:
     zones:
     - us-east1-b
     - us-east1-d
-    tag: web-http
+    tag: http-server
     minSize: 1
     maxSize: 2
+
+- name: web-lb
+  type: l3-load-balancer.jinja
+  properties:
+    port: 80
+    service-name: web
+    zones:
+    - us-east1-b
+    - us-east1-d
