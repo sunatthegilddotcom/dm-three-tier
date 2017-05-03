@@ -1,1 +1,2 @@
-Deploy a three-tier application stack to GCP using Deployment Manager
+# Deployment Manager Three-Tier application
+Deploys a three-tier application stack to GCP using Deployment Manager

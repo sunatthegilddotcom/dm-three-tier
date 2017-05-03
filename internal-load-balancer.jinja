@@ -1,0 +1,53 @@
+{% set HC_NAME = env['name'] + '-hc' %}
+{% set LB_PORT = properties['port'] %}
+{% set URLMAP_NAME = env['name'] + '-urlmap' %}
+{% set TARGETPROXY_NAME = env['name'] + '-targetproxy'%}
+{% set BACKENDSERVICE_NAME = env['name'] + '-backendservice'%}
+{% set FR_NAME = env['name'] + '-internal-lb' %}
+{% set REGION = properties['zones'][0][:-2] %}
+
+
+
+resources:
+- name: {{ HC_NAME }}
+  type: compute.v1.healthCheck
+  properties:
+    type: tcp
+    tcpHealthCheck:
+      port: {{ LB_PORT }}
+
+- name: {{ BACKENDSERVICE_NAME }}
+  type: compute.v1.regionBackendService
+  properties:
+    region: {{ REGION }}
+    network: {{ env['deployment'] }}-network
+    healthChecks: [ $(ref.{{ HC_NAME }}.selfLink) ]
+    backends:
+    {% for zone in properties['zones'] %}
+    - name: zone
+      group: $(ref.{{ properties['service-name'] + '-' + zone + '-igm' }}.instanceGroup)
+    {% endfor %}
+    protocol: TCP
+    loadBalancingScheme: INTERNAL
+
+
+# Create FW rules for 130.211.0.0/22 and 35.191.0.0/16 to allow internal health checks
+- name: fw-allow-tcp-healthcheck
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: ["130.211.0.0/22", "35.191.0.0/16"]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["0-65535"]
+
+# Forwarding Rule
+- name: {{ FR_NAME }}
+  type: compute.v1.forwardingRule
+  properties:
+    ports: [{{ LB_PORT }}]
+    network: $(ref.{{ env['deployment'] }}-network.selfLink)
+    subnetwork: $(ref.{{ properties['subnet'] }}.selfLink)
+    region: {{ REGION }}
+    backendService: $(ref.{{ BACKENDSERVICE_NAME }}.selfLink)
+    loadBalancingScheme: INTERNAL
