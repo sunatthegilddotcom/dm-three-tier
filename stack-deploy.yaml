@@ -1,7 +1,8 @@
 imports:
 - path: subnetwork.jinja
 - path: service-tier.jinja
-- path: l3-load-balancer.jinja
+- path: external-load-balancer.jinja
+- path: internal-load-balancer.jinja
 - path: startup-script.sh
 
 
@@ -17,14 +18,14 @@ resources:
     autoCreateSubnetworks: false
     region: us-east1
 
-- name: public-subnet
+- name: app-subnet
   type: subnetwork.jinja
   properties:
     cidr: 10.155.192.0/19
     subnet_name: public-subnet
     region: us-east1
 
-- name: app-web-subnet
+- name: web-subnet
   type: subnetwork.jinja
   properties:
     cidr: 10.155.0.0/18
@@ -69,11 +70,24 @@ resources:
     - IPProtocol: ICMP
 
 # Allow any traffic from the app-web tier
-- name: fw-allow-appweb-tier
+- name: fw-allow-app-tier
   type: compute.v1.firewall
   properties:
     network: $(ref.test-network.selfLink)
-    sourceRanges: [$(ref.app-web-subnet.ipCidrRange)]
+    sourceRanges: [$(ref.app-subnet.ipCidrRange)]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["0-65535"]
+    - IPProtocol: UDP
+      ports: ["0-65535"]
+    - IPProtocol: ICMP
+
+# Allow any traffic from the web tier
+- name: fw-allow-web-tier
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: [$(ref.web-subnet.ipCidrRange)]
     allowed:
     - IPProtocol: TCP
       ports: ["0-65535"]
@@ -103,7 +117,7 @@ resources:
 - name: web
   type: service-tier.jinja
   properties:
-    subnetwork: app-web-subnet
+    subnetwork: web-subnet
     zones:
     - us-east1-b
     - us-east1-d
@@ -116,7 +130,7 @@ resources:
 - name: app
   type: service-tier.jinja
   properties:
-    subnetwork: app-web-subnet
+    subnetwork: app-subnet
     zones:
     - us-east1-b
     - us-east1-d
@@ -130,10 +144,20 @@ resources:
 ######################################################
 
 - name: web-lb
-  type: l3-load-balancer.jinja
+  type: external-load-balancer.jinja
   properties:
     port: 80
     service-name: web
     zones:
     - us-east1-b
     - us-east1-d
+
+- name: app-lb
+  type: internal-load-balancer.jinja
+  properties:
+    port: 80
+    service-name: app
+    zones:
+    - us-east1-b
+    - us-east1-d
+    subnet: app-subnet
