@@ -11,9 +11,11 @@ resources:
       networkInterfaces:
       - network: $(ref.{{ env["deployment"] }}-network.selfLink)
         subnetwork: $(ref.{{ properties["subnetwork"] }}.selfLink)
+        {% if properties['externalIP'] %}
         accessConfigs:
         - name: External-IP
           type: ONE_TO_ONE_NAT
+        {% endif %}
       disks:
       - deviceName: boot
         type: PERSISTENT

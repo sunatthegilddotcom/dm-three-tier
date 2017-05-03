@@ -95,21 +95,11 @@ resources:
     - IPProtocol: ICMP
 
 
-
 ######################################################
-## LOAD BALANCERS
-######################################################
-
-## Reserve Global IP for Front Load Balancer
-- name: test-lb-address
-  type: compute.v1.globalAddresses
-
-
-######################################################
-## INSTANCES
+## INSTANCE GROUPS
 ######################################################
 
-## Create HA web service tier
+## Create Web service tier
 - name: web
   type: service-tier.jinja
   properties:
@@ -120,6 +110,24 @@ resources:
     tag: http-server
     minSize: 1
     maxSize: 2
+    externalIP: true
+
+## Create App service tier
+- name: app
+  type: service-tier.jinja
+  properties:
+    subnetwork: app-web-subnet
+    zones:
+    - us-east1-b
+    - us-east1-d
+    tag: app-server
+    minSize: 1
+    maxSize: 2
+    externalIP: false
+
+######################################################
+## LOAD BALANCERS
+######################################################
 
 - name: web-lb
   type: l3-load-balancer.jinja
