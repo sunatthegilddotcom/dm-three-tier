@@ -1,16 +1,11 @@
 imports:
 - path: subnetwork.jinja
-- path: instance-group.jinja
-- path: instance-template.jinja
+- path: service-tier.jinja
+- path: l3-load-balancer.jinja
 - path: startup-script.sh
 
-#resources:
-#- name: stack-setup
-#  type: master-template.jinja
 
 resources:
-
-
 
 ######################################################
 ## NETWORK and SUBNETS
@@ -55,6 +50,9 @@ resources:
   properties:
     network: $(ref.test-network.selfLink)
     sourceRanges: ["0.0.0.0/0"]
+    targetTags:
+    - http-server
+    - https-server
     allowed:
     - IPProtocol: TCP
       ports: ["80","443"]
@@ -97,37 +95,45 @@ resources:
     - IPProtocol: ICMP
 
 
+######################################################
+## INSTANCE GROUPS
+######################################################
+
+## Create Web service tier
+- name: web
+  type: service-tier.jinja
+  properties:
+    subnetwork: app-web-subnet
+    zones:
+    - us-east1-b
+    - us-east1-d
+    tag: http-server
+    minSize: 1
+    maxSize: 2
+    externalIP: true
+
+## Create App service tier
+- name: app
+  type: service-tier.jinja
+  properties:
+    subnetwork: app-web-subnet
+    zones:
+    - us-east1-b
+    - us-east1-d
+    tag: app-server
+    minSize: 1
+    maxSize: 2
+    externalIP: false
 
 ######################################################
 ## LOAD BALANCERS
 ######################################################
 
-## Static IP for Front Load Balancer
-- type: compute.v1.address
-  name: test-lb-address
+- name: web-lb
+  type: l3-load-balancer.jinja
   properties:
-    region: us-east1
-
-
-
-######################################################
-## INSTANCES
-######################################################
-
-## Create Instance Template
-- type: instance-template.jinja
-  name: web-instance-template
-  properties:
-    name: web-instance-template
-    subnetwork: app-web-subnet
-    tag: web-http
-
-## Create Instance Group
-- type: instance-group.jinja
-  name: web
-  properties:
-    zone: us-east1-b
-    instance-template: web-instance-template
-    targetSize: 2
-    maxReplicas: 4
-
+    port: 80
+    service-name: web
+    zones:
+    - us-east1-b
+    - us-east1-d

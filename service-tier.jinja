@@ -1,0 +1,58 @@
+
+{% set IT_NAME = env['name'] + '-it' %}
+{% set REGION = properties['zones'][0][:-2] %}
+
+resources:
+- name: {{ IT_NAME }}
+  type: compute.v1.instanceTemplate
+  properties:
+    properties:
+      machineType: f1-micro
+      networkInterfaces:
+      - network: $(ref.{{ env["deployment"] }}-network.selfLink)
+        subnetwork: $(ref.{{ properties["subnetwork"] }}.selfLink)
+        {% if properties['externalIP'] %}
+        accessConfigs:
+        - name: External-IP
+          type: ONE_TO_ONE_NAT
+        {% endif %}
+      disks:
+      - deviceName: boot
+        type: PERSISTENT
+        boot: true
+        autoDelete: true
+        initializeParams:
+          sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/family/debian-8
+      {% if properties["tag"] %}
+      tags:
+        items:
+        - {{ properties["tag"] }}
+      {% endif %}
+      metadata:
+        items:
+          - key: startup-script
+            value: |
+              {{ imports["startup-script.sh"] | indent(14) }}
+
+{% for zone in properties['zones'] %}
+{% set IGM_NAME = env['name'] + '-' + zone + '-igm' %}
+- name: {{ IGM_NAME }}
+  type: compute.v1.instanceGroupManager
+  properties:
+    baseInstanceName: {{ env["name"] }}-instance
+    instanceTemplate: $(ref.{{ IT_NAME }}.selfLink)
+    targetSize: {{ properties['minSize'] }}
+    zone: {{ zone }}
+
+- name: {{ IGM_NAME }}-as
+  type: compute.v1.autoscaler
+  properties:
+    zone: {{ zone }}
+    target: $(ref.{{ IGM_NAME }}.selfLink)
+    autoscalingPolicy:
+      minNumReplicas: {{ properties['minSize'] }}
+      maxNumReplicas: {{ properties['maxSize'] }}
+      cpuUtilization:
+        utilizationTarget: 0.8
+      coolDownPeriodSec: 90
+{% endfor %}
