@@ -3,7 +3,8 @@ imports:
 - path: service-tier.jinja
 - path: external-load-balancer.jinja
 - path: internal-load-balancer.jinja
-- path: startup-script.sh
+- path: web-startup-script.sh
+- path: db-startup-script.sh
 
 
 resources:
@@ -108,6 +109,18 @@ resources:
       ports: ["0-65535"]
     - IPProtocol: ICMP
 
+# Allow health checks from 130.211.0.0/22 and 35.191.0.0/16
+# for internal load balancers
+- name: fw-allow-tcp-healthcheck
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.test-network.selfLink)
+    sourceRanges: ["130.211.0.0/22", "35.191.0.0/16"]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["0-65535"]
+
+
 
 ######################################################
 ## INSTANCE GROUPS
@@ -125,6 +138,7 @@ resources:
     minSize: 1
     maxSize: 2
     externalIP: true
+    startup-script: web-startup-script.sh
 
 ## Create App service tier
 - name: app
@@ -138,6 +152,22 @@ resources:
     minSize: 1
     maxSize: 2
     externalIP: true
+    startup-script: web-startup-script.sh
+
+## Create DB service tier
+- name: db
+  type: service-tier.jinja
+  properties:
+    subnetwork: db-subnet
+    zones:
+    - us-east1-b
+    - us-east1-d
+    tag: db-server
+    minSize: 1
+    maxSize: 2
+    externalIP: true
+    startup-script: 'db-startup-script.sh'
+
 
 ######################################################
 ## LOAD BALANCERS
@@ -161,3 +191,13 @@ resources:
     - us-east1-b
     - us-east1-d
     subnet: app-subnet
+
+- name: db-lb
+  type: internal-load-balancer.jinja
+  properties:
+    port: 80
+    service-name: db
+    zones:
+    - us-east1-b
+    - us-east1-d
+    subnet: db-subnet

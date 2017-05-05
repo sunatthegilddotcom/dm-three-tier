@@ -31,16 +31,6 @@ resources:
     loadBalancingScheme: INTERNAL
 
 
-# Create FW rules for 130.211.0.0/22 and 35.191.0.0/16 to allow internal health checks
-- name: fw-allow-tcp-healthcheck
-  type: compute.v1.firewall
-  properties:
-    network: $(ref.test-network.selfLink)
-    sourceRanges: ["130.211.0.0/22", "35.191.0.0/16"]
-    allowed:
-    - IPProtocol: TCP
-      ports: ["0-65535"]
-
 # Forwarding Rule
 - name: {{ FR_NAME }}
   type: compute.v1.forwardingRule

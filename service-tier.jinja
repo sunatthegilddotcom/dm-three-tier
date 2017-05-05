@@ -32,7 +32,7 @@ resources:
         items:
           - key: startup-script
             value: |
-              {{ imports["startup-script.sh"] | indent(14) }}
+              {{ imports[ properties['startup-script'] ] | indent(14) }}
 
 {% for zone in properties['zones'] %}
 {% set IGM_NAME = env['name'] + '-' + zone + '-igm' %}
