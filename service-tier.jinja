@@ -30,9 +30,11 @@ resources:
       {% endif %}
       metadata:
         items:
-          - key: startup-script
-            value: |
-              {{ imports[ properties['startup-script'] ] | indent(14) }}
+        - key: color
+          value: {{ properties["color"] }}
+        - key: startup-script
+          value: |
+            {{ imports[ properties['startup-script'] ] | indent(12) }}
 
 {% for zone in properties['zones'] %}
 {% set IGM_NAME = env['name'] + '-' + zone + '-igm' %}
