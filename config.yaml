@@ -3,8 +3,10 @@ imports:
 - path: service-tier.jinja
 - path: external-load-balancer.jinja
 - path: internal-load-balancer.jinja
-- path: web-startup-script.sh
-- path: db-startup-script.sh
+- path: scripts/web-startup-script.sh
+  name: web-startup-script.sh
+- path: scripts/db-startup-script.sh
+  name: db-startup-script.sh
 
 
 resources:
