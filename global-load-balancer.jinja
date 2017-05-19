@@ -1,0 +1,43 @@
+{% set HC_NAME = env['name'] + '-hc' %}
+{% set LB_PORT = properties['port'] %}
+{% set GFR_NAME = env['name'] + '-gfr' %}
+{% set URLMAP_NAME = env['name'] + '-urlmap' %}
+{% set TARGETPROXY_NAME = env['name'] + '-targetproxy'%}
+{% set BACKENDSERVICE_NAME = env['name'] + '-backendservice'%}
+
+resources:
+- name: {{ HC_NAME }}
+  type: compute.v1.httpHealthCheck
+  properties:
+    port: {{ properties['port'] }}
+    requestPath: /
+
+- name: {{ BACKENDSERVICE_NAME }}
+  type: compute.v1.backendService
+  properties:
+    port: {{ properties["port"] }}
+    portName: {{ properties["service-name"] }}
+    backends:
+    {% for zone in properties['zones'] %}
+    - name: zone
+      group: $(ref.{{ service + '-' + zone + '-igm' }}.instanceGroup)
+    {% endfor %}
+    healthChecks: [ $(ref.{{ HC_NAME }}.selfLink) ]
+
+- name: {{ URLMAP_NAME }}
+  type: compute.v1.urlMap
+  properties:
+    defaultService: $(ref.{{ BACKENDSERVICE_NAME }}.selfLink)
+
+- name: {{ TARGETPROXY_NAME }}
+  type: compute.v1.targetHttpProxy
+  properties:
+    urlMap: $(ref.{{ URLMAP_NAME }}.selfLink)
+
+- name: {{ GFR_NAME }}
+  type: compute.v1.globalForwardingRule
+  properties:
+    IPAddress: $(ref.lb-global-address.selfLink)
+    IPProtocol: TCP
+    portRange: {{ LB_PORT }}
+    target: $(ref.{{ TARGETPROXY_NAME }}.selfLink)
