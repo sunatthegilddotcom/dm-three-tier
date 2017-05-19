@@ -127,7 +127,20 @@ resources:
 ######################################################
 
 ## Create Web service tier
-- name: web
+- name: web-green
+  type: service-tier.jinja
+  properties:
+    subnetwork: web-subnet
+    zones:
+    - us-east1-b
+    - us-east1-d
+    tag: http-server
+    minSize: 1
+    maxSize: 2
+    externalIP: true
+    startup-script: web-startup-script.sh
+
+- name: web-blue
   type: service-tier.jinja
   properties:
     subnetwork: web-subnet
@@ -141,7 +154,20 @@ resources:
     startup-script: web-startup-script.sh
 
 ## Create App service tier
-- name: app
+- name: app-green
+  type: service-tier.jinja
+  properties:
+    subnetwork: app-subnet
+    zones:
+    - us-east1-b
+    - us-east1-d
+    tag: app-server
+    minSize: 1
+    maxSize: 2
+    externalIP: true
+    startup-script: web-startup-script.sh
+
+- name: app-blue
   type: service-tier.jinja
   properties:
     subnetwork: app-subnet
@@ -155,7 +181,7 @@ resources:
     startup-script: web-startup-script.sh
 
 ## Create DB service tier
-- name: db
+- name: db-green
   type: service-tier.jinja
   properties:
     subnetwork: db-subnet
@@ -166,37 +192,84 @@ resources:
     minSize: 1
     maxSize: 2
     externalIP: true
-    startup-script: 'db-startup-script.sh'
+    startup-script: db-startup-script.sh
+
+- name: db-blue
+  type: service-tier.jinja
+  properties:
+    subnetwork: db-subnet
+    zones:
+    - us-east1-b
+    - us-east1-d
+    tag: db-server
+    minSize: 1
+    maxSize: 2
+    externalIP: true
+    startup-script: db-startup-script.sh
 
 
 ######################################################
 ## LOAD BALANCERS
 ######################################################
 
-- name: web-lb
-  type: external-load-balancer.jinja
-  properties:
-    port: 80
-    service-name: web
-    zones:
-    - us-east1-b
-    - us-east1-d
+## Reserve Global IP for Front Load Balancer
+- name: lb-global-address
+  type: compute.v1.globalAddresses
 
-- name: app-lb
+
+# - name: web-green-lb
+#   type: external-load-balancer.jinja
+#   properties:
+#     port: 80
+#     service-name: web-green
+#     zones:
+#     - us-east1-b
+#     - us-east1-d
+#
+# - name: web-blue-lb
+#   type: external-load-balancer.jinja
+#   properties:
+#     port: 80
+#     service-name: web-blue
+#     zones:
+#     - us-east1-b
+#     - us-east1-d
+
+- name: app-green-lb
   type: internal-load-balancer.jinja
   properties:
     port: 80
-    service-name: app
+    service-name: app-green
     zones:
     - us-east1-b
     - us-east1-d
     subnet: app-subnet
 
-- name: db-lb
+- name: app-blue-lb
   type: internal-load-balancer.jinja
   properties:
     port: 80
-    service-name: db
+    service-name: app-blue
+    zones:
+    - us-east1-b
+    - us-east1-d
+    subnet: app-subnet
+
+- name: db-green-lb
+  type: internal-load-balancer.jinja
+  properties:
+    port: 80
+    service-name: db-green
+    zones:
+    - us-east1-b
+    - us-east1-d
+    subnet: db-subnet
+
+- name: db-blue-lb
+  type: internal-load-balancer.jinja
+  properties:
+    port: 80
+    service-name: db-blue
     zones:
     - us-east1-b
     - us-east1-d

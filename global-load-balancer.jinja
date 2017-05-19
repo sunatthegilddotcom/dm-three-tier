@@ -1,15 +1,11 @@
 {% set HC_NAME = env['name'] + '-hc' %}
 {% set LB_PORT = properties['port'] %}
-{% set GFR_NAME = env['name'] + '-l7lb' %}
+{% set GFR_NAME = env['name'] + '-gfr' %}
 {% set URLMAP_NAME = env['name'] + '-urlmap' %}
 {% set TARGETPROXY_NAME = env['name'] + '-targetproxy'%}
 {% set BACKENDSERVICE_NAME = env['name'] + '-backendservice'%}
 
 resources:
-## Reserve Global IP for Front Load Balancer
-- name: lb-global-address
-  type: compute.v1.globalAddresses
-
 - name: {{ HC_NAME }}
   type: compute.v1.httpHealthCheck
   properties:
@@ -24,7 +20,7 @@ resources:
     backends:
     {% for zone in properties['zones'] %}
     - name: zone
-      group: $(ref.{{ properties['service-name'] + '-' + zone + '-igm' }}.instanceGroup)
+      group: $(ref.{{ service + '-' + zone + '-igm' }}.instanceGroup)
     {% endfor %}
     healthChecks: [ $(ref.{{ HC_NAME }}.selfLink) ]
 
