@@ -1,7 +1,8 @@
 imports:
 - path: subnetwork.jinja
-- path: service-tier.jinja
-- path: external-load-balancer.jinja
+- path: instance-template-group-zonal.jinja
+- path: instance-template-group-regional.jinja
+- path: global-load-balancer.jinja
 - path: internal-load-balancer.jinja
 - path: scripts/web-startup-script.sh
   name: web-startup-script.sh
@@ -130,34 +131,36 @@ resources:
 
 ## Create Web service tier
 - name: web-green
-  type: service-tier.jinja
+  type: instance-template-group-regional.jinja
   properties:
     subnetwork: web-subnet
-    zones:
-    - us-east1-b
-    - us-east1-d
+    region: us-east1
     tag: http-server
     minSize: 1
     maxSize: 2
     externalIP: true
+    # 'color' is used as a metadata attribute to color some text on the web page
+    # removed the entry if you don't need it
+    color: green
     startup-script: web-startup-script.sh
 
 - name: web-blue
-  type: service-tier.jinja
+  type: instance-template-group-regional.jinja
   properties:
     subnetwork: web-subnet
-    zones:
-    - us-east1-b
-    - us-east1-d
+    region: us-east1
     tag: http-server
     minSize: 1
     maxSize: 2
     externalIP: true
+    # 'color' is used as a metadata attribute to color some text on the web page
+    # removed the entry if you don't need it
+    color: blue
     startup-script: web-startup-script.sh
 
 ## Create App service tier
 - name: app-green
-  type: service-tier.jinja
+  type: instance-template-group-zonal.jinja
   properties:
     subnetwork: app-subnet
     zones:
@@ -170,7 +173,7 @@ resources:
     startup-script: web-startup-script.sh
 
 - name: app-blue
-  type: service-tier.jinja
+  type: instance-template-group-zonal.jinja
   properties:
     subnetwork: app-subnet
     zones:
@@ -184,7 +187,7 @@ resources:
 
 ## Create DB service tier
 - name: db-green
-  type: service-tier.jinja
+  type: instance-template-group-zonal.jinja
   properties:
     subnetwork: db-subnet
     zones:
@@ -197,7 +200,7 @@ resources:
     startup-script: db-startup-script.sh
 
 - name: db-blue
-  type: service-tier.jinja
+  type: instance-template-group-zonal.jinja
   properties:
     subnetwork: db-subnet
     zones:
