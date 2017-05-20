@@ -139,8 +139,8 @@ resources:
     minSize: 1
     maxSize: 2
     externalIP: true
-    # 'color' is used as a metadata attribute to color some text on the web page
-    # removed the entry if you don't need it
+    # 'color' is used as a metadata attribute to color the web page
+    # Comment out the line if you don't need it
     color: green
     startup-script: web-startup-script.sh
 
@@ -153,8 +153,8 @@ resources:
     minSize: 1
     maxSize: 2
     externalIP: true
-    # 'color' is used as a metadata attribute to color some text on the web page
-    # removed the entry if you don't need it
+    # 'color' is used as a metadata attribute to color the web page
+    # Comment out the line if you don't need it
     color: blue
     startup-script: web-startup-script.sh
 
