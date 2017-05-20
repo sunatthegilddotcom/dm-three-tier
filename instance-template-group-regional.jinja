@@ -1,6 +1,6 @@
 
 {% set IT_NAME = env['name'] + '-it' %}
-{% set REGION = properties['zones'][0][:-2] %}
+{% set REGION = properties['region'] %}
 
 resources:
 - name: {{ IT_NAME }}
@@ -30,26 +30,27 @@ resources:
       {% endif %}
       metadata:
         items:
-        - key: color
-          value: {{ properties["color"] }}
         - key: startup-script
           value: |
             {{ imports[ properties['startup-script'] ] | indent(12) }}
+        {% if properties["color"] %}
+        - key: color
+          value: {{ properties["color"] }}
+        {% endif %}
 
-{% for zone in properties['zones'] %}
-{% set IGM_NAME = env['name'] + '-' + zone + '-igm' %}
+{% set IGM_NAME = env['name'] + '-' + REGION + '-rigm' %}
 - name: {{ IGM_NAME }}
-  type: compute.v1.instanceGroupManager
+  type: compute.v1.regionInstanceGroupManager
   properties:
     baseInstanceName: {{ env["name"] }}-instance
     instanceTemplate: $(ref.{{ IT_NAME }}.selfLink)
     targetSize: {{ properties['minSize'] }}
-    zone: {{ zone }}
+    region: {{ REGION }}
 
-- name: {{ IGM_NAME }}-as
-  type: compute.v1.autoscaler
+- name: {{ IGM_NAME }}-ras
+  type: compute.v1.regionAutoscaler
   properties:
-    zone: {{ zone }}
+    region: {{ REGION }}
     target: $(ref.{{ IGM_NAME }}.selfLink)
     autoscalingPolicy:
       minNumReplicas: {{ properties['minSize'] }}
@@ -57,4 +58,3 @@ resources:
       cpuUtilization:
         utilizationTarget: 0.8
       coolDownPeriodSec: 90
-{% endfor %}
