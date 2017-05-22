@@ -136,8 +136,8 @@ resources:
     subnetwork: web-subnet
     region: us-east1
     tag: http-server
-    minSize: 1
-    maxSize: 2
+    minSize: 2
+    maxSize: 3
     externalIP: true
     # 'color' is used as a metadata attribute to color the web page
     # Comment out the line if you don't need it
@@ -150,8 +150,8 @@ resources:
     subnetwork: web-subnet
     region: us-east1
     tag: http-server
-    minSize: 1
-    maxSize: 2
+    minSize: 2
+    maxSize: 3
     externalIP: true
     # 'color' is used as a metadata attribute to color the web page
     # Comment out the line if you don't need it
@@ -217,28 +217,18 @@ resources:
 ## LOAD BALANCERS
 ######################################################
 
-## Reserve Global IP for Front Load Balancer
-- name: lb-global-address
-  type: compute.v1.globalAddresses
-
-
-# - name: web-green-lb
-#   type: external-load-balancer.jinja
-#   properties:
-#     port: 80
-#     service-name: web-green
-#     zones:
-#     - us-east1-b
-#     - us-east1-d
-#
-# - name: web-blue-lb
-#   type: external-load-balancer.jinja
-#   properties:
-#     port: 80
-#     service-name: web-blue
-#     zones:
-#     - us-east1-b
-#     - us-east1-d
+- name: web-lb
+  type: global-load-balancer.jinja
+  properties:
+    port: 80
+    # 'service-names' and 'region' are used to create the backend services
+    # for each instance group manager. They must match the values used to
+    # create the multi-zone instance groups above. Unique backend services
+    # will be created for each service name listed.
+    service-names:
+    - web-green
+    - web-blue
+    region: us-east1
 
 - name: app-green-lb
   type: internal-load-balancer.jinja

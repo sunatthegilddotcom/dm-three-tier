@@ -3,41 +3,74 @@
 {% set GFR_NAME = env['name'] + '-gfr' %}
 {% set URLMAP_NAME = env['name'] + '-urlmap' %}
 {% set TARGETPROXY_NAME = env['name'] + '-targetproxy'%}
-{% set BACKENDSERVICE_NAME = env['name'] + '-backendservice'%}
+{% set DEF_BACKENDSERVICE_NAME = properties['service-names'][0] + '-backendservice'%}
+{% set GLOBAL_ADDRESS_NAME = env['name'] + 'global-address' %}
 
 resources:
+
+- name: {{ GLOBAL_ADDRESS_NAME }}
+  type: compute.v1.globalAddresses
+
 - name: {{ HC_NAME }}
   type: compute.v1.httpHealthCheck
   properties:
     port: {{ properties['port'] }}
     requestPath: /
 
-- name: {{ BACKENDSERVICE_NAME }}
+# Create a backend service for each service given
+{% for servicename in properties['service-names'] %}
+- name: {{ servicename }}-backendservice
   type: compute.v1.backendService
   properties:
-    port: {{ properties["port"] }}
-    portName: {{ properties["service-name"] }}
-    backends:
-    {% for zone in properties['zones'] %}
-    - name: zone
-      group: $(ref.{{ service + '-' + zone + '-igm' }}.instanceGroup)
-    {% endfor %}
     healthChecks: [ $(ref.{{ HC_NAME }}.selfLink) ]
+    backends:
+    - group: $(ref.{{ servicename + '-' + properties['region'] + '-rigm' }}.instanceGroup)
+{% endfor %}
 
+#
+# Create a URL Map for each service pointing to a hostname for the service
+# Example: Service 'web-green' will point to a host named 'web-green.example.com'
+#
 - name: {{ URLMAP_NAME }}
   type: compute.v1.urlMap
   properties:
-    defaultService: $(ref.{{ BACKENDSERVICE_NAME }}.selfLink)
+    defaultService: $(ref.{{ DEF_BACKENDSERVICE_NAME }}.selfLink)
+    hostRules:
+    {% for servicename in properties['service-names'] %}
+    - hosts: ["{{ servicename }}.gcp.robhorner.org"]
+      pathMatcher: {{ servicename }}-pathmap
+    {% endfor %}
+    pathMatchers:
+    {% for servicename in properties['service-names'] %}
+      - name: {{ servicename }}-pathmap
+        defaultService: $(ref.{{ servicename }}-backendservice.selfLink)
+        pathRules:
+          - paths: ["/", "/*"]
+            service: $(ref.{{ servicename }}-backendservice.selfLink)
+    {% endfor %}
 
+#
+# Update Cloud DNS with the hostnames created above pointing to the global LB IP address
+#
+
+# CODE HERE
+
+#
+# Create an HTTP Target Proxy
+#
 - name: {{ TARGETPROXY_NAME }}
   type: compute.v1.targetHttpProxy
   properties:
     urlMap: $(ref.{{ URLMAP_NAME }}.selfLink)
 
+#
+# Create a Global Forwarding Rule and point it a the HTTP Target Proxy
+#
+
 - name: {{ GFR_NAME }}
   type: compute.v1.globalForwardingRule
   properties:
-    IPAddress: $(ref.lb-global-address.selfLink)
+    IPAddress: $(ref.{{GLOBAL_ADDRESS_NAME}}.selfLink)
     IPProtocol: TCP
     portRange: {{ LB_PORT }}
     target: $(ref.{{ TARGETPROXY_NAME }}.selfLink)
