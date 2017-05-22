@@ -23,11 +23,8 @@ resources:
         autoDelete: true
         initializeParams:
           sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/family/debian-8
-      {% if properties["tag"] %}
       tags:
-        items:
-        - {{ properties["tag"] }}
-      {% endif %}
+        items: {{ properties["tags"] }}
       metadata:
         items:
         - key: startup-script

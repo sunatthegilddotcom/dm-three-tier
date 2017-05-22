@@ -9,7 +9,6 @@ imports:
 - path: scripts/db-startup-script.sh
   name: db-startup-script.sh
 
-
 resources:
 
 ######################################################
@@ -135,7 +134,8 @@ resources:
   properties:
     subnetwork: web-subnet
     region: us-east1
-    tag: http-server
+    tags:
+    - http-server
     minSize: 2
     maxSize: 3
     externalIP: true
@@ -149,7 +149,8 @@ resources:
   properties:
     subnetwork: web-subnet
     region: us-east1
-    tag: http-server
+    tags:
+    - http-server
     minSize: 2
     maxSize: 3
     externalIP: true
@@ -166,7 +167,8 @@ resources:
     zones:
     - us-east1-b
     - us-east1-d
-    tag: app-server
+    tags:
+    - app-server
     minSize: 1
     maxSize: 2
     externalIP: true
@@ -179,7 +181,8 @@ resources:
     zones:
     - us-east1-b
     - us-east1-d
-    tag: app-server
+    tags:
+    - app-server
     minSize: 1
     maxSize: 2
     externalIP: true
@@ -193,7 +196,8 @@ resources:
     zones:
     - us-east1-b
     - us-east1-d
-    tag: db-server
+    tags:
+    - db-server
     minSize: 1
     maxSize: 2
     externalIP: true
@@ -206,7 +210,8 @@ resources:
     zones:
     - us-east1-b
     - us-east1-d
-    tag: db-server
+    tags:
+    - db-server
     minSize: 1
     maxSize: 2
     externalIP: true
